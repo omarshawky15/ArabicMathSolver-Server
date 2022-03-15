@@ -1,0 +1,17 @@
+<!doctype html>
+<title>Upload new File</title>
+<h1>Upload new File</h1>
+<form method=post enctype=multipart/form-data>
+    <input type=file name=file>
+    <input type=submit value=Upload>
+</form>
+
+<ul>
+    {% if prediction|length > 2 %}
+    <h3>Equation: {{ prediction.equation }}</h3>
+    <h3>Mapping: {{ prediction.mapping }}</h3>
+    <h3>Solution: {{ prediction.solution }}</h3>
+    {% else %}
+    <h3>Nothing Returned</h3>
+    {% endif %}
+</ul>
