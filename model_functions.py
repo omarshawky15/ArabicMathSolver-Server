@@ -5,7 +5,7 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 import sympy as sp
 
-all_labels = {56: 'log', 59: '0', 58: 'tg', 8: 'dhal', 4: 'jeem', 54: 'cos', 0: 'alif', 46: 'phi', 10: 'zay', 1: 'ba', 21: 'kaf', 64: '5', 35: '+', 52: 'times', 33: '{', 29: '(', 43: 'leq', 62: '3', 25: 'ha', 38: 'geq', 6: 'kha', 37: 'div', 48: 'sigma', 60: '1', 45: 'neq', 55: 'lim', 51: 'theta', 31: '[', 57: 'sin', 39: 'gt', 12: 'shin', 5: 'ha', 26: 'waw', 14: 'dad', 2: 'ta', 11: 'sen', 16: 'za', 47: '8', 50: 'sum', 18: 'ghayn', 17: 'ayn', 44: 'lt', 53: 'Larr', 24: 'nun', 19: 'fa', 27: 'ya', 61: '2', 28: '-', 41: 'infty', 15: 'ta', 36: '9', 20: 'qaf', 7: 'dal', 13: 'sad', 42: 'int', 30: ')', 65: '6', 3: 'tha', 23: 'mim', 63: '4', 9: 'ra', 40: 'i', 34: '}', 66: '7', 32: ']', 22: 'lam', 49: 'sqrt'}
+all_labels = {54: '8', 2: 'jeem', 53: '7', 49: '3', 37: 'sum', 0: 'alif', 47: '1', 1: 'ba', 33: 'neq', 51: '5', 3: 'dal', 6: 'sen', 20: '[', 55: '9', 39: 'times', 13: 'nun', 42: 'lim', 15: 'waw', 57: 'Sec', 18: '(', 17: '-', 23: '}', 8: 'ta', 36: 'sqrt', 10: 'qaf', 30: 'int', 45: 'tg', 29: 'infty', 31: 'leq', 35: 'sigma', 28: 'csc', 26: 'geq', 19: ')', 41: 'cos', 25: 'div', 7: 'sad', 46: '0', 43: 'log', 14: 'ha', 32: 'lt', 52: '6', 22: '{', 56: 'cot', 27: 'gt', 44: 'sin', 21: ']', 9: 'ayn', 5: 'zay', 40: 'Larr', 24: '+', 16: 'ya', 12: 'mim', 38: 'theta', 50: '4', 4: 'ra', 11: 'lam', 34: 'phi', 48: '2'}
 
 # Reading data from disk
 

@@ -1,7 +1,7 @@
 import requests
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
-
+import time
 from model_functions import *
 
 app = Flask(__name__)
@@ -30,8 +30,9 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             eqn, mapping, solution = predict(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            prediction = {'equation': eqn, 'mapping': str(mapping), 'solution': solution}
-            sendImage(str(prediction), os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            prediction = {'equation': eqn, 'mapping': str(mapping), 'solution': str(solution)}
+            sendImage('equation :' + eqn + '\nmapping : ' + str(mapping) + '\nsolution :' + str(solution),
+                       os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return prediction
     #            return render_template('index.html', prediction=prediction)
     return render_template('index.html')
@@ -47,7 +48,7 @@ def sendCropped(cropped_eqn_imgs, most_probable):
     for i in range(len(cropped_eqn_imgs)):
         cv2.imwrite(os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'),
                     cropped_eqn_imgs[i])
-        sendImage(most_probable[i],
+        sendImage(str([all_labels[w] for w in most_probable[i][::-1]]),
                   os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'))
 
 
@@ -75,11 +76,11 @@ def sendImage(filename, file):
     token = 'TOKEN'
     headers = {'Authorization': token}
     files = {
-        "file": (filename, open(file, 'rb'))  # The picture that we want to send in binary
+        "file": (filename + '.png', open(file, 'rb'))  # The picture that we want to send in binary
     }
     requests.post(f'LINK',
                   headers=headers,
-                  json={'content': str([all_labels[w] for w in  filename[::-1]])+'.png'})
+                  json={'content': filename+'.png'})
     requests.post(f'LINK',
                   headers=headers,
                   files=files)
