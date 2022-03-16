@@ -1,8 +1,8 @@
-import os
-from model_functions import *
+import requests
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
 
+from model_functions import *
 
 app = Flask(__name__)
 UPLOAD_FOLDER = './uploads'
@@ -30,21 +30,32 @@ def upload_file():
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             eqn, mapping, solution = predict(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            prediction = {'equation': eqn, 'mapping': mapping, 'solution': solution}
+            prediction = {'equation': eqn, 'mapping': str(mapping), 'solution': solution}
+            sendImage(str(prediction), os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return prediction
-#            return render_template('index.html', prediction=prediction)
-#    return render_template('index.html')
-    return 'Nothing'
+    #            return render_template('index.html', prediction=prediction)
+    return render_template('index.html')
+    # return 'Nothing'
 
 
 def allowed_file(filename):
     return '.' in filename and \
-        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def sendCropped(cropped_eqn_imgs, most_probable):
+    for i in range(len(cropped_eqn_imgs)):
+        cv2.imwrite(os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'),
+                    cropped_eqn_imgs[i])
+        sendImage(most_probable[i],
+                  os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'))
+
 
 
 def predict(img_path):
     cropped_eqn_imgs, rects = crop_image(img_path)
     most_probable = classify(model, cropped_eqn_imgs)
+    sendCropped(cropped_eqn_imgs, most_probable)
     pred_labbels = most_probable[:, -1]
     symbols = labels_to_symbols(rects, pred_labbels)
     # eqn_before_map = labels_to_eqn(pred_labbels)
@@ -59,6 +70,19 @@ def predict(img_path):
     except:
         return equation, mapping, "No Solution"
 
+
+def sendImage(filename, file):
+    token = 'TOKEN'
+    headers = {'Authorization': token}
+    files = {
+        "file": (filename, open(file, 'rb'))  # The picture that we want to send in binary
+    }
+    requests.post(f'LINK',
+                  headers=headers,
+                  json={'content': str([all_labels[w] for w in  filename[::-1]])+'.png'})
+    requests.post(f'LINK',
+                  headers=headers,
+                  files=files)
 
 if __name__ == '__main__':
     app.run(debug=True)
