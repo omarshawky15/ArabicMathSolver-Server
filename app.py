@@ -1,7 +1,6 @@
 import requests
 from flask import Flask, flash, request, redirect, render_template
 from werkzeug.utils import secure_filename
-import time
 from model_functions import *
 
 app = Flask(__name__)
@@ -31,10 +30,10 @@ def upload_file():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             eqn, mapping, solution = predict(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             prediction = {'equation': eqn, 'mapping': str(mapping), 'solution': str(solution)}
-            sendImage('equation :' + eqn + '\nmapping : ' + str(mapping) + '\nsolution :' + str(solution),
-                       os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            # sendImage('equation :' + eqn + '\nmapping : ' + str(mapping) + '\nsolution :' + str(solution),
+            # os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return prediction
-    #            return render_template('index.html', prediction=prediction)
+            # return render_template('index.html', prediction=prediction)
     return render_template('index.html')
     # return 'Nothing'
 
@@ -56,7 +55,7 @@ def sendCropped(cropped_eqn_imgs, most_probable):
 def predict(img_path):
     cropped_eqn_imgs, rects = crop_image(img_path)
     most_probable = classify(model, cropped_eqn_imgs)
-    sendCropped(cropped_eqn_imgs, most_probable)
+    # sendCropped(cropped_eqn_imgs, most_probable)
     pred_labbels = most_probable[:, -1]
     symbols = labels_to_symbols(rects, pred_labbels)
     # eqn_before_map = labels_to_eqn(pred_labbels)
@@ -86,4 +85,16 @@ def sendImage(filename, file):
                   files=files)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Normal running of server (Don't forget to uncomment this after testing)
+    app.run()
+
+    # Run server locally with debug mode on
+    # app.run(debug=True)
+
+    # Test prediction with local images without running server
+    # equation, mapping, solution = predict('IMG_PATH')
+    # print('Eqn: ' + equation)
+    # print('Mapping: ', end='')
+    # print(mapping)
+    # print('Solution: ', end='')
+    # print(solution)
