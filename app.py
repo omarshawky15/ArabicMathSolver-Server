@@ -32,6 +32,7 @@ def upload_file():
             prediction = {'equation': eqn, 'mapping': str(mapping), 'solution': str(solution)}
             # sendImage('equation :' + eqn + '\nmapping : ' + str(mapping) + '\nsolution :' + str(solution),
             # os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             return prediction
             # return render_template('index.html', prediction=prediction)
     return render_template('index.html')
@@ -61,7 +62,8 @@ def predict(img_path):
     # eqn_before_map = labels_to_eqn(pred_labbels)
     # print_labels(cropped_eqn_imgs,most_probable)
     edu_symbols = educated_parse(symbols)
-    equation, mapping = toEqn(edu_symbols)
+    initial_mapping = {}
+    equation, mapping = toEqn(edu_symbols, initial_mapping)
     equationSpilited = equation.split("=")
 
     try:

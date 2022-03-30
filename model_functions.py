@@ -10,11 +10,10 @@ from sklearn.model_selection import train_test_split
 all_labels = {39: 'times', 28: 'csc', 9: 'ayn', 17: '-', 48: '2', 19: ')', 8: 'ta', 31: 'leq', 14: 'ha', 43: 'log',
               16: 'ya', 52: '6', 50: '4', 56: 'cot', 36: 'sqrt', 3: 'dal', 55: '9', 37: 'sum', 53: '7', 27: 'gt',
               0: 'alif', 38: 'theta', 15: 'waw', 54: '8', 29: 'infty', 34: 'phi', 32: 'lt', 1: 'ba', 20: '[', 30: 'int',
-              45: 'tg', 21: ']', 6: 'sen', 51: '5', 57: 'Sec', 25: 'div', 49: '3', 44: 'sin', 47: '1', 33: 'neq',
+              45: 'tan', 21: ']', 6: 'sen', 51: '5', 57: 'Sec', 25: 'div', 49: '3', 44: 'sin', 47: '1', 33: 'neq',
               7: 'sad', 35: 'sigma', 10: 'qaf', 5: 'dot', 41: 'cos', 2: 'jeem', 23: '}', 40: 'Larr', 11: 'lam', 18: '(',
               42: 'lim', 22: '{', 13: 'nun', 4: 'ra', 24: '+', 26: 'geq', 46: '0', 12: 'mim'}
 
-curr_english_symbol = 'a'
 
 # Reading data from disk
 
@@ -288,12 +287,11 @@ def educated_parse(symbol_list):
 
 
 # Convert to Eqn
-def toEqn(symbol_list, mapped_symbols={}):
+def toEqn(symbol_list, mapped_symbols):
     variables = ['alif', 'ba', 'ta', 'tha', 'jeem', 'ha', 'kha', 'dal', 'dhal', 'ra', 'zay', 'sen', 'shin', 'sad',
                  'dad', 'ta', 'za', 'ayn', 'ghayn', 'fa', 'qaf', 'kaf', 'lam', 'mim', 'nun', 'ha', 'waw', 'ya']
     nums = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot']
     equation = ""
-    global curr_english_symbol
 
     i = len(symbol_list) - 1
     while i >= 0:
@@ -346,8 +344,7 @@ def toEqn(symbol_list, mapped_symbols={}):
 
         if symbol.label in variables:  # Normal variable, for ex: sen
             if symbol.label not in mapped_symbols:
-                mapped_symbols[symbol.label] = curr_english_symbol
-                curr_english_symbol = chr(ord(curr_english_symbol) + 1)
+                mapped_symbols[symbol.label] = get_next_eng_symbol(mapped_symbols)
 
             if i < len(symbol_list) - 1 and symbol_list[i + 1].label in nums:
                 equation += '*'
@@ -394,6 +391,21 @@ def isInner(symbol, sqrt):
     x_center = symbol.x1 + (symbol.x2 - symbol.x1) / 2
     y_center = symbol.y1 + (symbol.y2 - symbol.y1) / 2
     return sqrt.x1 < x_center < sqrt.x2 and sqrt.y1 < y_center < sqrt.y2
+
+
+def get_next_eng_symbol(mapped_symbols):
+    next_eng_symbol = 'x'
+    if mapped_symbols is None or len(mapped_symbols) == 0:
+        return next_eng_symbol
+
+    curr_eng_symbols = {v for k, v in mapped_symbols.items()}
+    for dummy in range(26):
+        if next_eng_symbol not in curr_eng_symbols:
+            return next_eng_symbol
+        else:
+            next_eng_symbol = chr(ord('a') + (ord(next_eng_symbol) - ord('a') + 1) % 26)
+    # Assumption: number of variables won't exceed 26 in one equation
+    return next_eng_symbol
 
 
 # Labels to Symbol_info and classify
