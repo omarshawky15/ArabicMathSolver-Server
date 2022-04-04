@@ -1,42 +1,116 @@
+import os
+
 import requests
-from flask import Flask, flash, request, redirect, render_template
+from cv2 import imwrite
+from flask import Flask, flash, request, render_template
+from keras.models import load_model
 from werkzeug.utils import secure_filename
-from model_functions import *
+
+from classification import classify, labels_to_symbols
+from evaluation import calculate, polynomial, differentiate, integrate
+from image_utility import crop_image
+from parsing import *
 
 app = Flask(__name__)
 UPLOAD_FOLDER = './uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-MODEL_PATH = './resources/model.zip'
+MODEL_PATH = r'./resources/model.h5'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 model = load_model(MODEL_PATH)
 
 
 @app.route('/', methods=['GET', 'POST'])
-def upload_file():
+def calculate_endpoint():
     if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return redirect(request.url)
-        file = request.files['file']
-        # If the user does not select a file, the browser submits an
-        # empty file without a filename.
-        if file.filename == '':
-            flash('No selected file')
-            return redirect(request.url)
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            eqn, mapping, solution = predict(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            prediction = {'equation': eqn, 'mapping': str(mapping), 'solution': str(solution)}
+        returned_file_result = get_file()
+        if returned_file_result is None:
+            return render_template('index.html')
+        else:
+            file, filepath = get_file()
+            file.save(filepath)
+            expression, mapping = predict(filepath)
+            solution, error = calculate(expression, mapping)
+            prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
+                          'error': str(error)}
             # sendImage('equation :' + eqn + '\nmapping : ' + str(mapping) + '\nsolution :' + str(solution),
-            # os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            os.remove(filepath)
             return prediction
             # return render_template('index.html', prediction=prediction)
     return render_template('index.html')
     # return 'Nothing'
+
+
+@app.route('/polynomial', methods=['GET', 'POST'])
+def polynomial_endpoint():
+    if request.method == 'POST':
+        returned_file_result = get_file()
+        if returned_file_result is None:
+            return render_template('index.html')
+        else:
+            file, filepath = get_file()
+            file.save(filepath)
+            expression, mapping = predict(filepath)
+            solution, error = polynomial(expression, mapping)
+            prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
+                          'error': str(error)}
+            os.remove(filepath)
+            return prediction
+    return render_template('index.html')
+
+
+@app.route('/differentiate', methods=['GET', 'POST'])
+def differentiate_endpoint():
+    if request.method == 'POST':
+        returned_file_result = get_file()
+        if returned_file_result is None:
+            return render_template('index.html')
+        else:
+            file, filepath = get_file()
+            file.save(filepath)
+            expression, mapping = predict(filepath)
+            solution, error = differentiate(expression, mapping)
+            prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
+                          'error': str(error)}
+            os.remove(filepath)
+            return prediction
+    return render_template('index.html')
+
+
+@app.route('/integrate', methods=['GET', 'POST'])
+def integrate_endpoint():
+    if request.method == 'POST':
+        returned_file_result = get_file()
+        if returned_file_result is None:
+            return render_template('index.html')
+        else:
+            file, filepath = get_file()
+            file.save(filepath)
+            expression, mapping = predict(filepath)
+            solution, error = integrate(expression, mapping)
+            prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
+                          'error': str(error)}
+            os.remove(filepath)
+            return prediction
+    return render_template('index.html')
+
+
+def get_file():
+    # check if the post request has the file part
+    if 'file' not in request.files:
+        flash('No file part')
+        return None
+    file = request.files['file']
+    # If the user does not select a file, the browser submits an
+    # empty file without a filename.
+    if file.filename == '':
+        flash('No selected file')
+        return None
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        return file, filepath
+    return None
 
 
 def allowed_file(filename):
@@ -63,14 +137,16 @@ def predict(img_path):
     # print_labels(cropped_eqn_imgs,most_probable)
     edu_symbols = educated_parse(symbols)
     initial_mapping = {}
-    equation, mapping = toEqn(edu_symbols, initial_mapping)
-    equationSpilited = equation.split("=")
+    expression, mapping = toExpr(edu_symbols, initial_mapping)
+    return expression, mapping
 
-    try:
-        solution = solve(equationSpilited[0], mapping)
-        return equation, mapping, solution
-    except:
-        return equation, mapping, "No Solution"
+
+def sendCropped(cropped_eqn_imgs, most_probable):
+    for i in range(len(cropped_eqn_imgs)):
+        imwrite(os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'),
+                cropped_eqn_imgs[i])
+        sendImage(str([all_labels[w] for w in most_probable[i][::-1]]),
+                  os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'))
 
 
 def sendImage(filename, file):
@@ -94,9 +170,8 @@ if __name__ == '__main__':
     # app.run(debug=True)
 
     # Test prediction with local images without running server
-    # equation, mapping, solution = predict('IMG_PATH')
-    # print('Eqn: ' + equation)
-    # print('Mapping: ', end='')
-    # print(mapping)
-    # print('Solution: ', end='')
-    # print(solution)
+    # expression, mapping = predict('IMG_PATH')
+    # solution, error = integrate(expression, mapping)
+    # prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
+    #               'error': str(error)}
+    # print(prediction)
