@@ -2,7 +2,7 @@ import os
 
 import requests
 from cv2 import imwrite
-from flask import Flask, flash, request, render_template
+from flask import Flask, flash, request, redirect, render_template
 from keras.models import load_model
 from werkzeug.utils import secure_filename
 
@@ -21,16 +21,26 @@ model = load_model(MODEL_PATH)
 
 
 @app.route('/', methods=['GET', 'POST'])
-def calculate_endpoint():
+@app.route('/<problem>', methods=['GET', 'POST'])
+def index(problem='calculate'):
     if request.method == 'POST':
         returned_file_result = get_file()
         if returned_file_result is None:
-            return render_template('index.html')
+            return redirect(request.url)
         else:
             file, filepath = get_file()
             file.save(filepath)
             expression, mapping = predict(filepath)
-            solution, error = calculate(expression, mapping)
+
+            if problem == 'polynomial':
+                solution, error = polynomial(expression, mapping)
+            elif problem == 'differentiate':
+                solution, error = differentiate(expression, mapping)
+            elif problem == 'integrate':
+                solution, error = integrate(expression, mapping)
+            else:
+                solution, error = calculate(expression, mapping)
+
             prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
                           'error': str(error)}
             # sendImage('equation :' + eqn + '\nmapping : ' + str(mapping) + '\nsolution :' + str(solution),
@@ -39,60 +49,6 @@ def calculate_endpoint():
             # return render_template('index.html', prediction=prediction)
     return render_template('index.html')
     # return 'Nothing'
-
-
-@app.route('/polynomial', methods=['GET', 'POST'])
-def polynomial_endpoint():
-    if request.method == 'POST':
-        returned_file_result = get_file()
-        if returned_file_result is None:
-            return render_template('index.html')
-        else:
-            file, filepath = get_file()
-            file.save(filepath)
-            expression, mapping = predict(filepath)
-            solution, error = polynomial(expression, mapping)
-            prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
-                          'error': str(error)}
-            os.remove(filepath)
-            return prediction
-    return render_template('index.html')
-
-
-@app.route('/differentiate', methods=['GET', 'POST'])
-def differentiate_endpoint():
-    if request.method == 'POST':
-        returned_file_result = get_file()
-        if returned_file_result is None:
-            return render_template('index.html')
-        else:
-            file, filepath = get_file()
-            file.save(filepath)
-            expression, mapping = predict(filepath)
-            solution, error = differentiate(expression, mapping)
-            prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
-                          'error': str(error)}
-            os.remove(filepath)
-            return prediction
-    return render_template('index.html')
-
-
-@app.route('/integrate', methods=['GET', 'POST'])
-def integrate_endpoint():
-    if request.method == 'POST':
-        returned_file_result = get_file()
-        if returned_file_result is None:
-            return render_template('index.html')
-        else:
-            file, filepath = get_file()
-            file.save(filepath)
-            expression, mapping = predict(filepath)
-            solution, error = integrate(expression, mapping)
-            prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
-                          'error': str(error)}
-            os.remove(filepath)
-            return prediction
-    return render_template('index.html')
 
 
 def get_file():
