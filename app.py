@@ -126,8 +126,8 @@ if __name__ == '__main__':
     # app.run(debug=True)
 
     # Test prediction with local images without running server
-    # expression, mapping = predict('IMG_PATH')
-    # solution, error = integrate(expression, mapping)
+    # expression, mapping = predict('uploads/log.jpg')
+    # solution, error = calculate(expression, mapping)
     # prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
     #               'error': str(error)}
     # print(prediction)

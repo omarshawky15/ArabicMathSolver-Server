@@ -147,6 +147,32 @@ def toExpr(symbol_list, mapped_symbols):
             mapped_symbols.update(inner_mapping)
             equation += ' sqrt(' + inner_eqn + ') '
             continue
+        # handle log
+        if symbol.label == 'log':
+            if i + 1 < len(symbol_list) and symbol_list[i + 1].label in nums:
+                equation += '*'
+            i -= 1
+            log_base = deque()
+            log_arg = deque()
+            while i >= 0:
+                if ((symbol_list[i + 1].label == 'log' or symbol_list[i - 1].label == ')' or symbol_list[
+                    i - 2].label == ')') and symbol_list[i].label in nums):
+                    log_base.appendleft(symbol_list[i])
+                elif (symbol_list[i].label != ')' and symbol_list[i].label != '('):
+                    log_arg.appendleft(symbol_list[i])
+                i -= 1
+                if symbol_list[i].label == '(':
+                    i -= 1
+                    break
+            base_eqn = '10'
+            if len(log_base) > 0:
+                base_eqn, base_mapping = toExpr(log_base, mapped_symbols)
+                mapped_symbols.update(base_mapping)
+            log_eqn, log_mapping = toExpr(log_arg, mapped_symbols)
+            equation += 'log(' + log_eqn + ', ' + base_eqn + ')'
+            continue
+
+
 
         if symbol.label in variables:  # Normal variable, for ex: sen
             if symbol.label not in mapped_symbols:
