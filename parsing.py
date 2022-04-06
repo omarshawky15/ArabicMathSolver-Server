@@ -102,12 +102,27 @@ def toExpr(symbol_list, mapped_symbols):
     i = len(symbol_list) - 1
     while i >= 0:
         symbol = symbol_list[i]
+
+        # Handle power
         if (i < len(symbol_list) - 1) and isUpperPow(symbol, symbol_list[i + 1]) and \
                 (symbol_list[i].label in variables or symbol_list[i].label in nums) and \
-                (symbol_list[i + 1].label in variables or symbol_list[i + 1].label in nums):  # Handle power
+                (symbol_list[i + 1].label in variables or symbol_list[i + 1].label in nums):
+            base = symbol_list[i + 1]
+            exp = symbol
+            exponent_list = deque()
 
-            equation += '^' + symbol_list[i].label
+            exponent_list.appendleft(exp)
             i -= 1
+            exp = symbol_list[i]
+            while i >= 0 and isUpperPow(exp, base):
+                exponent_list.appendleft(exp)
+                i -= 1
+                exp = symbol_list[i]
+
+            exp_eqn, exp_mapping = toExpr(exponent_list, mapped_symbols)
+            if len(exp_eqn) > 1:
+                exp_eqn = '(' + exp_eqn + ')'
+            equation += '^' + exp_eqn
             continue
 
         # Handle fraction
@@ -147,6 +162,7 @@ def toExpr(symbol_list, mapped_symbols):
             mapped_symbols.update(inner_mapping)
             equation += ' sqrt(' + inner_eqn + ') '
             continue
+
         # handle log
         if symbol.label == 'log':
             if i + 1 < len(symbol_list) and symbol_list[i + 1].label in nums:
@@ -171,8 +187,6 @@ def toExpr(symbol_list, mapped_symbols):
             log_eqn, log_mapping = toExpr(log_arg, mapped_symbols)
             equation += 'log(' + log_eqn + ', ' + base_eqn + ')'
             continue
-
-
 
         if symbol.label in variables:  # Normal variable, for ex: sen
             if symbol.label not in mapped_symbols:
@@ -203,10 +217,10 @@ def toExpr(symbol_list, mapped_symbols):
     return equation, mapped_symbols
 
 
-def isUpperPow(power, s1):
-    s1_y_center = s1.y1 + (s1.y2 - s1.y1) / 2
-    s1_x_center = s1.x1 + (s1.x2 - s1.x1) / 2
-    return power.y2 < s1_y_center and power.x2 < s1_x_center
+def isUpperPow(exponent, base):
+    s1_y_center = base.y1 + (base.y2 - base.y1) / 2
+    s1_x_center = base.x1 + (base.x2 - base.x1) / 2
+    return exponent.y2 < s1_y_center and exponent.x2 < s1_x_center
 
 
 def isUpperFrac(up, frac):

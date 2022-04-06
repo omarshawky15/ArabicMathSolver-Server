@@ -126,8 +126,14 @@ if __name__ == '__main__':
     # app.run(debug=True)
 
     # Test prediction with local images without running server
-    # expression, mapping = predict('uploads/log.jpg')
-    # solution, error = calculate(expression, mapping)
+    # Download image by link
+    # link = 'https://link'
+    # img_path = 'uploads/' + link.split('/')[-1]
+    # # img_path = 'uploads/IMG_PATH'
+    # open(img_path, 'wb').write(requests.get(link, allow_redirects=True).content)
+    #
+    # expression, mapping = predict(img_path)
+    # solution, error = polynomial(expression, mapping)
     # prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
     #               'error': str(error)}
     # print(prediction)
