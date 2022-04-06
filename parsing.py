@@ -3,9 +3,14 @@ from collections import deque
 all_labels = {39: 'times', 28: 'csc', 9: 'ayn', 17: '-', 48: '2', 19: ')', 8: 'ta', 31: 'leq', 14: 'ha', 43: 'log',
               16: 'ya', 52: '6', 50: '4', 56: 'cot', 36: 'sqrt', 3: 'dal', 55: '9', 37: 'sum', 53: '7', 27: 'gt',
               0: 'alif', 38: 'theta', 15: 'waw', 54: '8', 29: 'infty', 34: 'phi', 32: 'lt', 1: 'ba', 20: '[', 30: 'int',
-              45: 'tan', 21: ']', 6: 'sen', 51: '5', 57: 'Sec', 25: 'div', 49: '3', 44: 'sin', 47: '1', 33: 'neq',
+              45: 'tan', 21: ']', 6: 'sen', 51: '5', 57: 'sec', 25: 'div', 49: '3', 44: 'sin', 47: '1', 33: 'neq',
               7: 'sad', 35: 'sigma', 10: 'qaf', 5: 'dot', 41: 'cos', 2: 'jeem', 23: '}', 40: 'Larr', 11: 'lam', 18: '(',
               42: 'lim', 22: '{', 13: 'nun', 4: 'ra', 24: '+', 26: 'geq', 46: '0', 12: 'mim'}
+variables = ['alif', 'ba', 'jeem', 'dal', 'ra', 'sen', 'sad', 'za', 'ayn', 'fa', 'qaf', 'kaf', 'lam', 'mim', 'nun',
+             'waw', 'ya']
+nums = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot']
+constants = {'ta': 'pi', 'ha': 'E'}
+right_to_left_brackets = {'(': ')', ')': '(', '[': ']', ']': '[', '{': '}', '}': '{'}
 
 
 class Symbol_Info:
@@ -94,9 +99,6 @@ def updateSymbol(update_list, symbol_list, j, new_label):
 
 # Convert to mathematical expression
 def toExpr(symbol_list, mapped_symbols):
-    variables = ['alif', 'ba', 'ta', 'tha', 'jeem', 'ha', 'kha', 'dal', 'dhal', 'ra', 'zay', 'sen', 'shin', 'sad',
-                 'dad', 'ta', 'za', 'ayn', 'ghayn', 'fa', 'qaf', 'kaf', 'lam', 'mim', 'nun', 'ha', 'waw', 'ya']
-    nums = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot']
     equation = ""
 
     i = len(symbol_list) - 1
@@ -105,8 +107,7 @@ def toExpr(symbol_list, mapped_symbols):
 
         # Handle power
         if (i < len(symbol_list) - 1) and isUpperPow(symbol, symbol_list[i + 1]) and \
-                (symbol_list[i].label in variables or symbol_list[i].label in nums) and \
-                (symbol_list[i + 1].label in variables or symbol_list[i + 1].label in nums):
+                (symbol_list[i].label in variables or symbol_list[i].label in nums):
             base = symbol_list[i + 1]
             exp = symbol
             exponent_list = deque()
@@ -127,6 +128,8 @@ def toExpr(symbol_list, mapped_symbols):
 
         # Handle fraction
         if symbol.label == 'frac':
+            if isMultiplication(i, symbol_list):
+                equation += '*'
             frac = symbol
             i -= 1
             upper_list = deque()
@@ -150,6 +153,8 @@ def toExpr(symbol_list, mapped_symbols):
 
         # Handle square root
         if symbol.label == 'sqrt':
+            if isMultiplication(i, symbol_list):
+                equation += '*'
             sqrt = symbol
             i -= 1
             inner_list = deque()
@@ -165,7 +170,7 @@ def toExpr(symbol_list, mapped_symbols):
 
         # handle log
         if symbol.label == 'log':
-            if i + 1 < len(symbol_list) and symbol_list[i + 1].label in nums:
+            if isMultiplication(i, symbol_list):
                 equation += '*'
             i -= 1
             log_base = deque()
@@ -192,11 +197,18 @@ def toExpr(symbol_list, mapped_symbols):
             if symbol.label not in mapped_symbols:
                 mapped_symbols[symbol.label] = get_next_eng_symbol(mapped_symbols)
 
-            if i < len(symbol_list) - 1 and symbol_list[i + 1].label in nums:
+            if isMultiplication(i, symbol_list):
                 equation += '*'
             equation += mapped_symbols[symbol.label]
             i -= 1
-            continue
+        elif symbol.label in constants:  # Like pi or e
+            if isMultiplication(i, symbol_list):
+                equation += '*'
+            equation += constants[symbol.label]
+            i -= 1
+        elif symbol.label in right_to_left_brackets:
+            equation += right_to_left_brackets[symbol.label]
+            i -= 1
         elif symbol.label.isnumeric():
             if symbol.label == 'dot':
                 curr_num = '.'
@@ -239,6 +251,11 @@ def isInner(symbol, sqrt):
     return sqrt.x1 < x_center < sqrt.x2 and sqrt.y1 < y_center < sqrt.y2
 
 
+def isMultiplication(i, symbol_list):
+    return i < len(symbol_list) - 1 and (symbol_list[i + 1].label in nums or symbol_list[i + 1].label in variables or
+                                         symbol_list[i + 1].label in constants)
+
+
 def get_next_eng_symbol(mapped_symbols):
     next_eng_symbol = 'x'
     if mapped_symbols is None or len(mapped_symbols) == 0:
@@ -250,5 +267,7 @@ def get_next_eng_symbol(mapped_symbols):
             return next_eng_symbol
         else:
             next_eng_symbol = chr(ord('a') + (ord(next_eng_symbol) - ord('a') + 1) % 26)
+            if next_eng_symbol == 'e':  # Exclude euler's number from variables
+                next_eng_symbol = 'f'
     # Assumption: number of variables won't exceed 26 in one equation
     return next_eng_symbol

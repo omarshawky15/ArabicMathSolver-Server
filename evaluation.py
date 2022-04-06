@@ -1,8 +1,8 @@
 import sympy as sp
 
 
-def calculate(equation, mapping):
-    solution, error = '', ''
+def calculate(equation, mapping, error=''):
+    solution = ''
     try:
         sympy_expr = sp.simplify(sp.sympify(equation, evaluate=True))
     except:
@@ -13,7 +13,7 @@ def calculate(equation, mapping):
     for k, v in mapping.items():
         variables.append(sp.Symbol(v))
 
-    return sympy_expr, error
+    return sympy_expr.evalf(), error
 
 
 def polynomial(expression, mapping):
@@ -36,8 +36,8 @@ def polynomial(expression, mapping):
         error = "Sympifying equation failed"
         return solution, error
     if len(mapping) == 0:
-        error = 'No variables in the equation'
-        return solution, error
+        error = 'No variables in the equation, pass to calculate()'
+        return calculate(expression, mapping, error)
 
     variables = []
     for k, v in mapping.items():

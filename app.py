@@ -129,8 +129,10 @@ if __name__ == '__main__':
     # Download image by link
     # link = 'https://link'
     # img_path = 'uploads/' + link.split('/')[-1]
-    # # img_path = 'uploads/IMG_PATH'
-    # open(img_path, 'wb').write(requests.get(link, allow_redirects=True).content)
+    # if not os.path.exists(img_path):
+    #     open(img_path, 'wb').write(requests.get(link, allow_redirects=True).content)
+    # # Local image
+    # # img_path = 'uploads/IMG_PATH.jpg'
     #
     # expression, mapping = predict(img_path)
     # solution, error = polynomial(expression, mapping)
