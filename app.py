@@ -1,4 +1,5 @@
 import os
+import time
 
 import requests
 from cv2 import imwrite
@@ -10,6 +11,7 @@ from classification import classify, labels_to_symbols
 from evaluation import calculate, polynomial, differentiate, integrate
 from image_utility import crop_image
 from parsing import *
+from translation import translate_to_arabic_html
 
 app = Flask(__name__)
 UPLOAD_FOLDER = './uploads'
@@ -41,8 +43,8 @@ def index(problem='calculate'):
             else:
                 solution, error = calculate(expression, mapping)
 
-            prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
-                          'error': str(error)}
+            arabic_expr, arabic_sol = translate_to_arabic_html(expression, solution, mapping)
+            prediction = {'expression': arabic_expr, 'solution': arabic_sol, 'error': str(error)}
             # sendImage('equation :' + eqn + '\nmapping : ' + str(mapping) + '\nsolution :' + str(solution),
             os.remove(filepath)
             return prediction
@@ -74,19 +76,11 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def sendCropped(cropped_eqn_imgs, most_probable):
-    for i in range(len(cropped_eqn_imgs)):
-        cv2.imwrite(os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'),
-                    cropped_eqn_imgs[i])
-        sendImage(str([all_labels[w] for w in most_probable[i][::-1]]),
-                  os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'))
-
-
-
-def predict(img_path):
+def predict(img_path, crop_with_labels=False):
     cropped_eqn_imgs, rects = crop_image(img_path)
     most_probable = classify(model, cropped_eqn_imgs)
-    # sendCropped(cropped_eqn_imgs, most_probable)
+    if crop_with_labels:
+        sendCropped(cropped_eqn_imgs, most_probable)
     pred_labbels = most_probable[:, -1]
     symbols = labels_to_symbols(rects, pred_labbels)
     # eqn_before_map = labels_to_eqn(pred_labbels)
@@ -103,6 +97,8 @@ def sendCropped(cropped_eqn_imgs, most_probable):
                 cropped_eqn_imgs[i])
         sendImage(str([all_labels[w] for w in most_probable[i][::-1]]),
                   os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'))
+        if i % 4 == 0:  # Every 5 images wait 5 seconds because of limit of the number of messages
+            time.sleep(5)
 
 
 def sendImage(filename, file):
@@ -132,10 +128,13 @@ if __name__ == '__main__':
     # if not os.path.exists(img_path):
     #     open(img_path, 'wb').write(requests.get(link, allow_redirects=True).content)
     # # Local image
-    # # img_path = 'uploads/IMG_PATH.jpg'
-    #
+    # img_path = 'uploads/IMG_PATH.jpg'
+
     # expression, mapping = predict(img_path)
     # solution, error = polynomial(expression, mapping)
-    # prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution),
-    #               'error': str(error)}
-    # print(prediction)
+    # eng_prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution), 'error': str(error)}
+    # print(eng_prediction)
+    #
+    # arabic_expr, arabic_sol = translate_to_arabic_html(expression, solution, mapping)
+    # arabic_prediction = {'expression': arabic_expr, 'solution': arabic_sol, 'error': str(error)}
+    # print(arabic_prediction)
