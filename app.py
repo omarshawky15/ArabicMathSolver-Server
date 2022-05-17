@@ -77,6 +77,9 @@ def allowed_file(filename):
 
 
 def predict(img_path, crop_with_labels=False):
+    if not os.path.exists(img_path):  # Image not found in path
+        return '', {}
+
     cropped_eqn_imgs, rects = crop_image(img_path)
     most_probable = classify(model, cropped_eqn_imgs)
     if crop_with_labels:
@@ -114,6 +117,27 @@ def sendImage(filename, file):
                   headers=headers,
                   files=files)
 
+
+def runLocal(img_path='', img_link=''):
+    if img_path == '' and img_link == '':
+        return
+    elif img_link != '':  # Download image by link
+        img_path = UPLOAD_FOLDER + img_link.split('/')[-1]
+        if not os.path.exists(img_path):
+            open(img_path, 'wb').write(requests.get(img_link, allow_redirects=True).content)
+    else:  # Continue with local image path
+        pass
+
+    expression, mapping = predict(img_path)
+    solution, error = polynomial(expression, mapping)
+    eng_prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution), 'error': str(error)}
+    print(eng_prediction)
+
+    arabic_expr, arabic_sol = translate_to_arabic_html(expression, solution, mapping)
+    arabic_prediction = {'expression': arabic_expr, 'solution': arabic_sol, 'error': str(error)}
+    print(arabic_prediction)
+
+
 if __name__ == '__main__':
     # Normal running of server (Don't forget to uncomment this after testing)
     app.run()
@@ -122,19 +146,4 @@ if __name__ == '__main__':
     # app.run(debug=True)
 
     # Test prediction with local images without running server
-    # Download image by link
-    # link = 'https://link'
-    # img_path = 'uploads/' + link.split('/')[-1]
-    # if not os.path.exists(img_path):
-    #     open(img_path, 'wb').write(requests.get(link, allow_redirects=True).content)
-    # # Local image
-    # img_path = 'uploads/IMG_PATH.jpg'
-
-    # expression, mapping = predict(img_path)
-    # solution, error = polynomial(expression, mapping)
-    # eng_prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution), 'error': str(error)}
-    # print(eng_prediction)
-    #
-    # arabic_expr, arabic_sol = translate_to_arabic_html(expression, solution, mapping)
-    # arabic_prediction = {'expression': arabic_expr, 'solution': arabic_sol, 'error': str(error)}
-    # print(arabic_prediction)
+    # runLocal(img_path='', img_link='')

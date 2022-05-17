@@ -1,6 +1,6 @@
 dictionary = {"alif": "أ",
               "ba": "ب",
-              "jeem": "ت",
+              "jeem": "جـ",
               "dal": "د",
               "ra": "ر",
               ".": ",",
@@ -17,7 +17,7 @@ dictionary = {"alif": "أ",
               "ya": "ى",
               "E": "هـ",
               "I": "ت",
-              "-": "-",
+              "-": " -",  # To handle issue with html when converting from english ltr to arabic rtl
               "(": "(",
               ")": ")",
               "[": "[",
@@ -25,8 +25,8 @@ dictionary = {"alif": "أ",
               "{": "{",
               "}": "}",
               "+": "+",
-              "div": "/",
-              "/": "/",
+              "div": "\\",
+              "/": "\\",
               "geq": "≥",
               "gt": ">",
               "csc": "قتا",
@@ -62,9 +62,10 @@ dictionary = {"alif": "أ",
               " ": "",
               "*": "*",
               "=": "=",
+              ",": ","
               }
 
-stop_symbols = ["(", ")", "[", "]", "*", "+", "-", "^", "="]
+stop_symbols = ["(", ")", "[", "]", "*", "+", "-", "^", "/", "=", ",", " "]
 
 
 def toArabicExpr(equation, mapped_symbols):
@@ -78,29 +79,35 @@ def toArabicExpr(equation, mapped_symbols):
             while i < len(equation) and equation[i] not in stop_symbols:
                 curr_symbol += equation[i]
                 i += 1
-            if curr_symbol in mapped_symbols:
+            if curr_symbol in mapped_symbols and mapped_symbols[curr_symbol] in dictionary:
                 arabic_expr += dictionary[mapped_symbols[curr_symbol]]
             elif curr_symbol == 'log':
-                log_parameter = ''
+                log_arg = ''
                 base = ''
                 if equation[i] == '(':
                     i += 1
-                    while i < len(equation) and equation[i] != ',':
-                        log_parameter += equation[i]
+                    while i < len(equation) and equation[i] not in [',', ')']:
+                        log_arg += equation[i]
                         i += 1
-                    i += 1
-                    while i < len(equation) and equation[i] != ')':
-                        base += equation[i]
+                    if i < len(equation) and equation[i] == ')':
+                        arabic_expr += dictionary[curr_symbol] + '(' + toArabicExpr(log_arg, mapped_symbols) + ')'
                         i += 1
-                    i += 1
-                    arabic_expr += dictionary[curr_symbol] + "<sub>" + toArabicExpr(base, mapped_symbols) + "</sub>" + \
-                                   '(' + toArabicExpr(log_parameter, mapped_symbols) + ')'
+                    else:
+                        i += 1
+                        while i < len(equation) and equation[i] != ')':
+                            base += equation[i]
+                            i += 1
+                        i += 1
+                        arabic_expr += dictionary[curr_symbol] + "<sub>" + toArabicExpr(base,
+                                                                                        mapped_symbols) + "</sub>" + \
+                                       '(' + toArabicExpr(log_arg, mapped_symbols) + ')'
+
                 else:
                     print("Error in log parsing")
             elif curr_symbol in dictionary:
                 arabic_expr += dictionary[curr_symbol]
             else:
-                print("General error")
+                arabic_expr += curr_symbol
             i -= 1
         elif equation[i] == '^':
             i += 1
@@ -111,34 +118,41 @@ def toArabicExpr(equation, mapped_symbols):
                 while i < len(equation) and equation[i] != ')':
                     exp_eqn += equation[i]
                     i += 1
-                arabic_expr += "<sup>" + toArabicExpr(exp_eqn, mapped_symbols) + "</sup>"
+                arabic_expr += " <sup>" + toArabicExpr(exp_eqn, mapped_symbols) + "</sup>"
             else:
                 exp_eqn += equation[i]
-                arabic_expr += "<sup>" + toArabicExpr(exp_eqn, mapped_symbols) + "</sup>"
-        else:
+                arabic_expr += " <sup>" + toArabicExpr(exp_eqn, mapped_symbols) + "</sup>"
+        elif equation[i] in dictionary:
             arabic_expr += dictionary[equation[i]]
+        else:
+            arabic_expr += equation[i]
 
         i += 1
 
-    if arabic_expr[0] in ['+', '-']:
-        arabic_expr = arabic_expr[1:] + arabic_expr[0]
     return arabic_expr
 
 
+def refine_expr(expression):
+    return expression.replace("**", "^")
+
+
 def translate_to_arabic_html(expression, solution, mapping):
+    expression = refine_expr(str(expression))
     reversed_mapping = {v: k for k, v in mapping.items()}
     arabic_expr = toHtml(toArabicExpr(expression, reversed_mapping))
 
     arabic_sol = []
     if not isinstance(solution, list):
-        curr_arabic_sol = toArabicExpr(str(solution), reversed_mapping)
+        curr_arabic_sol = refine_expr(str(solution))
+        curr_arabic_sol = toArabicExpr(curr_arabic_sol, reversed_mapping)
         arabic_sol.append(toHtml(curr_arabic_sol))
     else:
         for sol in solution:
-            curr_arabic_sol = toArabicExpr(str(sol), reversed_mapping)
+            curr_arabic_sol = refine_expr(str(sol))
+            curr_arabic_sol = toArabicExpr(curr_arabic_sol, reversed_mapping)
             arabic_sol.append(toHtml(curr_arabic_sol))
     return arabic_expr, arabic_sol
 
 
 def toHtml(expression):
-    return "<html>\n<body>\n<p>" + expression + "</p>\n</body>\n</html>"
+    return "<html><body><p>" + expression + "</p></body></html>"

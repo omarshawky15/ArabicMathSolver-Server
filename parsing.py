@@ -1,11 +1,10 @@
 from collections import deque
 
-all_labels = {39: 'times', 28: 'csc', 9: 'ayn', 17: '-', 48: '2', 19: ')', 8: 'ta', 31: 'leq', 14: 'ha', 43: 'log',
-              16: 'ya', 52: '6', 50: '4', 56: 'cot', 36: 'sqrt', 3: 'dal', 55: '9', 37: 'sum', 53: '7', 27: 'gt',
-              0: 'alif', 38: 'theta', 15: 'waw', 54: '8', 29: 'infty', 34: 'phi', 32: 'lt', 1: 'ba', 20: '[', 30: 'int',
-              45: 'tan', 21: ']', 6: 'sen', 51: '5', 57: 'sec', 25: 'div', 49: '3', 44: 'sin', 47: '1', 33: 'neq',
-              7: 'sad', 35: 'sigma', 10: 'qaf', 5: 'dot', 41: 'cos', 2: 'jeem', 23: '}', 40: 'Larr', 11: 'lam', 18: '(',
-              42: 'lim', 22: '{', 13: 'nun', 4: 'ra', 24: '+', 26: 'geq', 46: '0', 12: 'mim'}
+all_labels = {0: 'alif', 1: 'ba', 2: 'jeem', 3: 'dal', 4: 'dot', 5: 'sen', 6: 'sad', 7: 'ta', 8: 'ayn', 9: 'qaf',
+              10: 'lam', 11: 'mim', 12: 'nun', 13: 'ha', 14: 'waw', 15: 'ya', 16: '-', 17: '(', 18: ')', 19: '+',
+              20: 'div', 21: 'csc', 22: 'int', 23: 'phi', 24: 'sqrt', 25: 'theta', 26: 'times', 27: 'cos', 28: 'log',
+              29: 'sin', 30: 'tan', 31: '0', 32: '1', 33: '2', 34: '3', 35: '4', 36: '5', 37: '6', 38: '7', 39: '8',
+              40: '9', 41: 'cot', 42: 'sec'}
 variables = ['alif', 'ba', 'jeem', 'dal', 'ra', 'sen', 'sad', 'za', 'ayn', 'fa', 'qaf', 'kaf', 'lam', 'mim', 'nun',
              'waw', 'ya']
 nums = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot']
@@ -33,9 +32,6 @@ def educated_parse(symbol_list):
 
         if symbol.label == '-':  # Handle line symbols (equal, minus, division, fraction)
             parseLine(symbol, symbol_list, i, remove_symbols_indexes)
-
-        if symbol.label == '0':  # Handle dot symbols (baa, taa, thaa, ..)
-            parseDot(symbol, symbol_list, i, remove_symbols_indexes)
 
     for index in remove_symbols_indexes:
         symbol_list.pop(index)
@@ -79,11 +75,6 @@ def parseLine(symbol, symbol_list, i, remove_symbols_indexes):
             updateSymbol([symbol], symbol_list, i, 'frac')
 
 
-def parseDot(symbol, symbol_list, i, remove_symbols_indexes):
-    # Todo
-    pass
-
-
 def updateSymbol(update_list, symbol_list, j, new_label):
     new_x1 = 9223372036854775807
     new_y1 = 9223372036854775807
@@ -106,7 +97,8 @@ def toExpr(symbol_list, mapped_symbols):
         symbol = symbol_list[i]
 
         # Handle power
-        if (i < len(symbol_list) - 1) and isUpperPow(symbol, symbol_list[i + 1]) and \
+        if (i < len(symbol_list) - 1) and isProperPow(symbol_list[i + 1]) and \
+                isUpperPow(symbol, symbol_list[i + 1]) and \
                 (symbol_list[i].label in variables or symbol_list[i].label in nums):
             base = symbol_list[i + 1]
             exp = symbol
@@ -148,7 +140,11 @@ def toExpr(symbol_list, mapped_symbols):
             under_eqn, under_mapping = toExpr(under_list, mapped_symbols)
             mapped_symbols.update(upper_mapping)
             mapped_symbols.update(under_mapping)
-            equation += '(' + upper_eqn + ')' + '/' + '(' + under_eqn + ')'
+            if len(upper_eqn) > 1:
+                upper_eqn = '(' + upper_eqn + ')'
+            if len(under_eqn) > 1:
+                under_eqn = '(' + under_eqn + ')'
+            equation += upper_eqn + '/' + under_eqn
             continue
 
         # Handle square root
@@ -165,7 +161,7 @@ def toExpr(symbol_list, mapped_symbols):
 
             inner_eqn, inner_mapping = toExpr(inner_list, mapped_symbols)
             mapped_symbols.update(inner_mapping)
-            equation += ' sqrt(' + inner_eqn + ') '
+            equation += 'sqrt(' + inner_eqn + ')'
             continue
 
         # handle log
@@ -177,7 +173,7 @@ def toExpr(symbol_list, mapped_symbols):
             log_arg = deque()
             while i >= 0:
                 if ((symbol_list[i + 1].label == 'log' or symbol_list[i - 1].label == ')' or symbol_list[
-                    i - 2].label == ')') and symbol_list[i].label in nums):
+                    i - 2].label == ')') and (symbol_list[i].label in nums or symbol_list[i].label in constants)):
                     log_base.appendleft(symbol_list[i])
                 elif (symbol_list[i].label != ')' and symbol_list[i].label != '('):
                     log_arg.appendleft(symbol_list[i])
@@ -190,7 +186,7 @@ def toExpr(symbol_list, mapped_symbols):
                 base_eqn, base_mapping = toExpr(log_base, mapped_symbols)
                 mapped_symbols.update(base_mapping)
             log_eqn, log_mapping = toExpr(log_arg, mapped_symbols)
-            equation += 'log(' + log_eqn + ', ' + base_eqn + ')'
+            equation += 'log(' + log_eqn + ',' + base_eqn + ')'
             continue
 
         if symbol.label in variables:  # Normal variable, for ex: sen
@@ -218,15 +214,24 @@ def toExpr(symbol_list, mapped_symbols):
             while i >= 0 and symbol_list[i].label in nums:
                 if symbol_list[i].label == 'dot':
                     curr_num += '.'
+                elif isUpperPow(symbol_list[i], symbol_list[i + 1]) and symbol_list[i + 1].label != 'dot':
+                    break
                 else:
                     curr_num += symbol_list[i].label
                 i -= 1
             equation += curr_num[::-1]  # Reversed number, ex: "21" --> "12"
+        elif symbol.label == 'times':
+            equation += '*'
+            i -= 1
         else:
             equation += symbol.label
             i -= 1
 
     return equation, mapped_symbols
+
+
+def isProperPow(symbol):
+    return symbol.label in variables or symbol.label in nums or symbol.label in constants or symbol.label == '('
 
 
 def isUpperPow(exponent, base):
