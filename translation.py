@@ -155,4 +155,4 @@ def translate_to_arabic_html(expression, solution, mapping):
 
 
 def toHtml(expression):
-    return "<html><body><p>" + expression + "</p></body></html>"
+    return "<html><body>" + expression + "</body></html>"
