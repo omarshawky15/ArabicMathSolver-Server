@@ -69,6 +69,20 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(prediction['expression'], '(5.3+7)/5+1')
         self.assertEqual(prediction['solution'], '3.46000000000000')
 
+    def test_times(self):
+        prediction = get_Prediction('test_images/IMG_10.png')
+        self.assertEqual(prediction['expression'], '2*x*sin(x^2)')
+        self.assertEqual(prediction['solution'], '[0, -sqrt(pi), sqrt(pi)]')
+        self.assertEqual(prediction['arabic_expr'], '<html><body>٢*س*جا(س <sup>٢</sup>)</body></html>')
+        self.assertEqual(prediction['arabic_sol'], ['<html><body>٠</body></html>', '<html><body> -√(ط)</body></html>',
+                                                    '<html><body>√(ط)</body></html>'])
+
+        prediction = get_Prediction('test_images/IMG_11.png')
+        self.assertEqual(prediction['expression'], '(1+1)*(2+3)')
+        self.assertEqual(prediction['solution'], '10.0000000000000')
+        self.assertEqual(prediction['arabic_expr'], '<html><body>(١+١)*(٢+٣)</body></html>')
+        self.assertEqual(prediction['arabic_sol'], ['<html><body>١٠,٠٠٠٠٠٠٠٠٠٠٠٠٠</body></html>'])
+
     def test_trig_functions(self):
         prediction = get_Prediction('test_images/IMG_20220330_185200_343.jpg')
         self.assertEqual(prediction['expression'], 'sin(2*pi)+1')

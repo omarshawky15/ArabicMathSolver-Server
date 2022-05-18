@@ -39,6 +39,8 @@ def index(problem='calculate'):
             elif problem == 'differentiate':
                 solution, error = differentiate(expression, mapping)
             elif problem == 'integrate':
+                if len(mapping) == 0:
+                    mapping = {'sen': 'x'}
                 solution, error = integrate(expression, mapping)
             else:
                 solution, error = calculate(expression, mapping)
@@ -118,7 +120,7 @@ def sendImage(filename, file):
                   files=files)
 
 
-def runLocal(img_path='', img_link=''):
+def runLocal(img_path='', img_link='', problem='p'):
     if img_path == '' and img_link == '':
         return
     elif img_link != '':  # Download image by link
@@ -129,7 +131,16 @@ def runLocal(img_path='', img_link=''):
         pass
 
     expression, mapping = predict(img_path)
-    solution, error = polynomial(expression, mapping)
+    if problem == 'p':
+        solution, error = polynomial(expression, mapping)
+    elif problem == 'd':
+        solution, error = differentiate(expression, mapping)
+    elif problem == 'i':
+        if len(mapping) == 0:
+            mapping = {'sen': 'x'}
+        solution, error = integrate(expression, mapping)
+    else:
+        solution, error = calculate(expression, mapping)
     eng_prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution), 'error': str(error)}
     print(eng_prediction)
 

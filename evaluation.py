@@ -54,15 +54,16 @@ def differentiate(expression, mapping):
         error = "Sympifying equation failed"
         return solution, error
 
-    if len(mapping) != 1:
+    if len(mapping) > 1:
         error = 'Wrong number of variables to differentiate with respect to'
         return solution, error
-
-    variable = ''
-    for k, v in mapping.items():
-        variable = sp.Symbol(v)
-
-    return sp.diff(sympy_eqn, variable), error
+    elif len(mapping) == 1:
+        variable = ''
+        for k, v in mapping.items():
+            variable = sp.Symbol(v)
+        return sp.diff(sympy_eqn, variable), error
+    else:
+        return sp.diff(sympy_eqn), error
 
 
 def integrate(expression, mapping):

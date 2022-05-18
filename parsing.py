@@ -8,6 +8,7 @@ all_labels = {0: 'alif', 1: 'ba', 2: 'jeem', 3: 'dal', 4: 'dot', 5: 'sen', 6: 's
 variables = ['alif', 'ba', 'jeem', 'dal', 'ra', 'sen', 'sad', 'za', 'ayn', 'fa', 'qaf', 'kaf', 'lam', 'mim', 'nun',
              'waw', 'ya']
 nums = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'dot']
+math_func = ['csc', 'sqrt', 'cos', 'log', 'sin', 'tan', 'cot', 'sec', 'frac']
 constants = {'ta': 'pi', 'ha': 'E'}
 right_to_left_brackets = {'(': ')', ')': '(', '[': ']', ']': '[', '{': '}', '}': '{'}
 
@@ -118,10 +119,16 @@ def toExpr(symbol_list, mapped_symbols):
             equation += '^' + exp_eqn
             continue
 
+        # Add multiplication sign
+        if isMultiplication(i, symbol_list):
+            equation += '*'
+        elif symbol.label == 'times':
+            equation += '*'
+            i -= 1
+            continue
+
         # Handle fraction
         if symbol.label == 'frac':
-            if isMultiplication(i, symbol_list):
-                equation += '*'
             frac = symbol
             i -= 1
             upper_list = deque()
@@ -149,8 +156,6 @@ def toExpr(symbol_list, mapped_symbols):
 
         # Handle square root
         if symbol.label == 'sqrt':
-            if isMultiplication(i, symbol_list):
-                equation += '*'
             sqrt = symbol
             i -= 1
             inner_list = deque()
@@ -166,8 +171,6 @@ def toExpr(symbol_list, mapped_symbols):
 
         # handle log
         if symbol.label == 'log':
-            if isMultiplication(i, symbol_list):
-                equation += '*'
             i -= 1
             log_base = deque()
             log_arg = deque()
@@ -192,14 +195,9 @@ def toExpr(symbol_list, mapped_symbols):
         if symbol.label in variables:  # Normal variable, for ex: sen
             if symbol.label not in mapped_symbols:
                 mapped_symbols[symbol.label] = get_next_eng_symbol(mapped_symbols)
-
-            if isMultiplication(i, symbol_list):
-                equation += '*'
             equation += mapped_symbols[symbol.label]
             i -= 1
         elif symbol.label in constants:  # Like pi or e
-            if isMultiplication(i, symbol_list):
-                equation += '*'
             equation += constants[symbol.label]
             i -= 1
         elif symbol.label in right_to_left_brackets:
@@ -220,9 +218,6 @@ def toExpr(symbol_list, mapped_symbols):
                     curr_num += symbol_list[i].label
                 i -= 1
             equation += curr_num[::-1]  # Reversed number, ex: "21" --> "12"
-        elif symbol.label == 'times':
-            equation += '*'
-            i -= 1
         else:
             equation += symbol.label
             i -= 1
@@ -257,8 +252,14 @@ def isInner(symbol, sqrt):
 
 
 def isMultiplication(i, symbol_list):
-    return i < len(symbol_list) - 1 and (symbol_list[i + 1].label in nums or symbol_list[i + 1].label in variables or
-                                         symbol_list[i + 1].label in constants)
+    if i >= len(symbol_list) - 1:
+        return False
+    prev_label = symbol_list[i + 1].label
+    curr_label = symbol_list[i].label
+    return ((prev_label in nums and prev_label != 'dot') or
+            prev_label in variables or prev_label in constants or prev_label == '(') and \
+           ((curr_label in nums and curr_label != 'dot') or
+            curr_label in variables or curr_label in constants or curr_label == ')' or curr_label in math_func)
 
 
 def get_next_eng_symbol(mapped_symbols):
