@@ -98,9 +98,8 @@ def toExpr(symbol_list, mapped_symbols):
         symbol = symbol_list[i]
 
         # Handle power
-        if (i < len(symbol_list) - 1) and isProperPow(symbol_list[i + 1]) and \
-                isUpperPow(symbol, symbol_list[i + 1]) and \
-                (symbol_list[i].label in variables or symbol_list[i].label in nums):
+        if (i < len(symbol_list) - 1) and isProperBase(symbol_list[i + 1]) and isProperExp(symbol_list[i]) and\
+                isUpperPow(symbol, symbol_list[i + 1]):
             base = symbol_list[i + 1]
             exp = symbol
             exponent_list = deque()
@@ -170,6 +169,7 @@ def toExpr(symbol_list, mapped_symbols):
             continue
 
         # handle log
+        # Assumption: log arguments must be between brackets
         if symbol.label == 'log':
             i -= 1
             log_base = deque()
@@ -225,14 +225,22 @@ def toExpr(symbol_list, mapped_symbols):
     return equation, mapped_symbols
 
 
-def isProperPow(symbol):
+# Checks that the base of a power is not any miscellaneous symbol
+def isProperBase(symbol):
     return symbol.label in variables or symbol.label in nums or symbol.label in constants or symbol.label == '('
 
 
+# Checks that the exponent of a power is not any miscellaneous symbol
+def isProperExp(symbol):
+    return symbol.label in variables or symbol.label in nums or symbol.label in constants or symbol.label in math_func \
+           or symbol.label in [')', '-']
+
+
+# The exponent borders should be to the left of 0.4 of the base rectangle width and above 0.4 of its length
 def isUpperPow(exponent, base):
-    s1_y_center = base.y1 + (base.y2 - base.y1) / 2
-    s1_x_center = base.x1 + (base.x2 - base.x1) / 2
-    return exponent.y2 < s1_y_center and exponent.x2 < s1_x_center
+    base_height_limit = base.y1 + (base.y2 - base.y1) * 0.4
+    base_width_limit = base.x1 + (base.x2 - base.x1) * 0.4
+    return exponent.y2 < base_height_limit and exponent.x2 < base_width_limit and exponent.y1 < base.y1
 
 
 def isUpperFrac(up, frac):
