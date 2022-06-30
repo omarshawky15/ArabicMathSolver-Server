@@ -32,6 +32,8 @@ def crop_image(path):
     im = cv2.imread(path)
     img = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     _, img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+    # img = cv2.Canny(img, 100, 200)
+    # cv2.imshow(img)
     img = ~img
     ctrs, _ = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 

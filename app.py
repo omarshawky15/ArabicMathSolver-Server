@@ -85,6 +85,8 @@ def predict(img_path, crop_with_labels=False):
     cropped_eqn_imgs, rects = crop_image(img_path)
     most_probable = classify(model, cropped_eqn_imgs)
     if crop_with_labels:
+        sendImage(img_path,img_path)
+        time.sleep(1)
         sendCropped(cropped_eqn_imgs, most_probable)
     pred_labbels = most_probable[:, -1]
     symbols = labels_to_symbols(rects, pred_labbels)
@@ -102,8 +104,9 @@ def sendCropped(cropped_eqn_imgs, most_probable):
                 cropped_eqn_imgs[i])
         sendImage(str([all_labels[w] for w in most_probable[i][::-1]]),
                   os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'))
-        if i % 4 == 0:  # Every 5 images wait 5 seconds because of limit of the number of messages
-            time.sleep(5)
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], str(most_probable[i]) + '_image.png'))
+        if i % 2 == 0:  # Every 5 images wait 5 seconds because of limit of the number of messages
+            time.sleep(1)
 
 
 def sendImage(filename, file):
