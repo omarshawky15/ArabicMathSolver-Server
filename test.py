@@ -100,7 +100,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(prediction['expression'], 'sec(6*pi+3)')
         self.assertEqual(prediction['solution'], '-1.01010866590799')
 
-        prediction = get_Prediction('test_images/IMG_20220406_222734_822.jpg')
+        prediction = get_Prediction('test_images/IMG_12.png')
         self.assertEqual(prediction['expression'], 'sin(E)^2+cos(E)^2')
         self.assertEqual(prediction['solution'], '1.00000000000000')
         self.assertEqual(prediction['arabic_expr'],
