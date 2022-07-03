@@ -168,22 +168,35 @@ def toExpr(symbol_list, mapped_symbols):
             equation += 'sqrt(' + inner_eqn + ')'
             continue
 
-        # handle log
-        # Assumption: log arguments must be between brackets
+        # Handle log
+        # Assumptions:
+        # a) log arguments must be between brackets.
+        # b) log base is simple expression and doesn't contain any brackets.
         if symbol.label == 'log':
             i -= 1
             log_base = deque()
             log_arg = deque()
-            while i >= 0:
-                if ((symbol_list[i + 1].label == 'log' or symbol_list[i - 1].label == ')' or symbol_list[
-                    i - 2].label == ')') and (symbol_list[i].label in nums or symbol_list[i].label in constants)):
-                    log_base.appendleft(symbol_list[i])
-                elif (symbol_list[i].label != ')' and symbol_list[i].label != '('):
+            while i >= 0 and symbol_list[i].label != ')':  # Parse log base
+                log_base.appendleft(symbol_list[i])
+                i -= 1
+
+            open_close_brackets = 0
+            if symbol_list[i].label == ')':
+                open_close_brackets += 1
+            else:   # Assumption (a) violated. Fail-safe: add the next symbol as log argument and continue
+                log_arg.appendleft(symbol_list[i])
+            i -= 1
+
+            while i >= 0 and open_close_brackets > 0:   # Parse log arguments
+                if symbol_list[i].label == ')':
+                    open_close_brackets += 1
+                elif symbol_list[i].label == '(':
+                    open_close_brackets -= 1
+
+                if open_close_brackets > 0:     # Add all symbols except log brackets' opening and closing
                     log_arg.appendleft(symbol_list[i])
                 i -= 1
-                if symbol_list[i].label == '(':
-                    i -= 1
-                    break
+
             base_eqn = '10'
             if len(log_base) > 0:
                 base_eqn, base_mapping = toExpr(log_base, mapped_symbols)
@@ -243,14 +256,20 @@ def isUpperPow(exponent, base):
     return exponent.y2 < base_height_limit and exponent.x2 < base_width_limit and exponent.y1 < base.y1
 
 
+# The symbol is considered above the fraction line if the symbol center is between the fraction line's ends and the
+# symbol's lowest point is above the fraction line's lowest point.
+# Assumption: the fraction line is mostly horizontal.
 def isUpperFrac(up, frac):
     up_x_center = up.x1 + (up.x2 - up.x1) / 2
-    return up.y2 < frac.y1 and frac.x1 < up_x_center < frac.x2
+    return up.y2 < frac.y2 and frac.x1 < up_x_center < frac.x2
 
 
+# The symbol is considered below the fraction line if the symbol center is between the fraction line's ends and the
+# symbol's highest point is below the fraction line's highest point.
+# Assumption: the fraction line is mostly horizontal.
 def isUnderFrac(down, frac):
     down_x_center = down.x1 + (down.x2 - down.x1) / 2
-    return down.y1 > frac.y2 and frac.x1 < down_x_center < frac.x2
+    return down.y1 > frac.y1 and frac.x1 < down_x_center < frac.x2
 
 
 def isInner(symbol, sqrt):

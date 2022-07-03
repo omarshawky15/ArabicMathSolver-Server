@@ -32,22 +32,9 @@ def index(problem='calculate'):
         else:
             file, filepath = get_file()
             file.save(filepath)
-            expression, mapping = predict(filepath)
 
-            if problem == 'polynomial':
-                solution, error = polynomial(expression, mapping)
-            elif problem == 'differentiate':
-                solution, error = differentiate(expression, mapping)
-            elif problem == 'integrate':
-                if len(mapping) == 0:
-                    mapping = {'sen': 'x'}
-                solution, error = integrate(expression, mapping)
-            else:
-                solution, error = calculate(expression, mapping)
+            _, prediction = solve(filepath, problem)
 
-            arabic_expr, arabic_sol = translate_to_arabic_html(expression, solution, mapping)
-            prediction = {'expression': arabic_expr, 'solution': arabic_sol, 'error': str(error)}
-            # sendImage('equation :' + eqn + '\nmapping : ' + str(mapping) + '\nsolution :' + str(solution),
             os.remove(filepath)
             return prediction
             # return render_template('index.html', prediction=prediction)
@@ -78,6 +65,36 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def solve(img_path, problem):
+    expression, mapping = predict(img_path)
+    if problem == 'polynomial' or problem == 'p':
+        solution, error = polynomial(expression, mapping)
+    elif problem == 'differentiate' or problem == 'd':
+        solution, error = differentiate(expression, mapping)
+    elif problem == 'integrate' or problem == 'i':
+        if len(mapping) == 0:
+            mapping = {'sen': 'x'}
+
+        splitted_expr = expression.split('int')
+        if len(splitted_expr) == 2:  # Integration symbol found
+            expression = splitted_expr[1]
+        elif len(splitted_expr) == 1:  # Integration symbol not found
+            expression = splitted_expr[0]
+        else:  # More than 1 integration symbol found
+            pass
+
+        solution, error = integrate(expression, mapping)
+    else:
+        solution, error = calculate(expression, mapping)
+
+    arabic_expr, arabic_sol = translate_to_arabic_html(expression, solution, mapping)
+
+    eng_prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution), 'error': str(error)}
+    arabic_prediction = {'expression': arabic_expr, 'solution': arabic_sol, 'error': str(error)}
+
+    return eng_prediction, arabic_prediction
+
+
 def predict(img_path, crop_with_labels=False):
     if not os.path.exists(img_path):  # Image not found in path
         return '', {}
@@ -85,7 +102,7 @@ def predict(img_path, crop_with_labels=False):
     cropped_eqn_imgs, rects = crop_image(img_path)
     most_probable = classify(model, cropped_eqn_imgs)
     if crop_with_labels:
-        sendImage(img_path,img_path)
+        sendImage(img_path, img_path)
         time.sleep(1)
         sendCropped(cropped_eqn_imgs, most_probable)
     pred_labbels = most_probable[:, -1]
@@ -133,23 +150,8 @@ def runLocal(img_path='', img_link='', problem='p'):
     else:  # Continue with local image path
         pass
 
-    expression, mapping = predict(img_path)
-    if problem == 'p':
-        solution, error = polynomial(expression, mapping)
-    elif problem == 'd':
-        solution, error = differentiate(expression, mapping)
-    elif problem == 'i':
-        if len(mapping) == 0:
-            mapping = {'sen': 'x'}
-        solution, error = integrate(expression, mapping)
-    else:
-        solution, error = calculate(expression, mapping)
-    eng_prediction = {'expression': expression, 'mapping': str(mapping), 'solution': str(solution), 'error': str(error)}
-    print(eng_prediction)
-
-    arabic_expr, arabic_sol = translate_to_arabic_html(expression, solution, mapping)
-    arabic_prediction = {'expression': arabic_expr, 'solution': arabic_sol, 'error': str(error)}
-    print(arabic_prediction)
+    eng_prediction, arabic_prediction = solve(img_path, problem)
+    print(eng_prediction, arabic_prediction, sep='\n')
 
 
 if __name__ == '__main__':

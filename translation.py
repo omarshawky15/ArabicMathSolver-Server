@@ -114,10 +114,20 @@ def toArabicExpr(equation, mapped_symbols):
             exp_eqn = ''
             if equation[i] == '(':
                 i += 1
-                # Assuming only 1 pair of brackets exist in the exponent
-                while i < len(equation) and equation[i] != ')':
-                    exp_eqn += equation[i]
+                open_close_brackets = 1
+
+                # Assumption: brackets in exponent are valid.
+                while i < len(equation) and open_close_brackets > 0:
+                    if equation[i] == '(':
+                        open_close_brackets += 1
+                    elif equation[i] == ')':
+                        open_close_brackets -= 1
+
+                    if open_close_brackets > 0:
+                        exp_eqn += equation[i]
                     i += 1
+                i -= 1  # Cancel effect of outer loop
+
                 arabic_expr += " <sup>" + toArabicExpr(exp_eqn, mapped_symbols) + "</sup>"
             else:
                 exp_eqn += equation[i]
