@@ -163,6 +163,13 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(prediction['arabic_expr'], '<html><body>لـو<sub>١٠</sub>(٢*٢ -٣)</body></html>')
         self.assertEqual(prediction['arabic_sol'], ['<html><body>٠</body></html>'])
 
+        prediction = get_Prediction('test_images/IMG_13.png')
+        self.assertEqual(prediction['expression'], 'log(log(log(16,10),10),10)')
+        self.assertEqual(prediction['solution'], '-1.09328921534395')
+        self.assertEqual(prediction['arabic_expr'],
+                         '<html><body>لـو<sub>١٠</sub>(لـو<sub></sub>(لـو<sub></sub>(١٦))),١٠),١٠)</body></html>')
+        self.assertEqual(prediction['arabic_sol'], ['<html><body> -١,٠٩٣٢٨٩٢١٥٣٤٣٩٥</body></html>'])
+
     def test_complex_expr(self):
         prediction = get_Prediction('test_images/IMG_20220515_205442_998.jpg')
         self.assertEqual(prediction['expression'], '(-x+sqrt(x^2+4*x*pi))/(sin(pi)+log(10,10))')

@@ -42,10 +42,22 @@ def educated_parse(symbol_list):
 def parseLine(symbol, symbol_list, i, remove_symbols_indexes):
     if i < len(symbol_list) - 1:  # Handle equal mark
         s1 = symbol_list[i + 1]
-        if s1.label == '-' and abs(s1.x1 - symbol.x1) < 30 and abs(s1.x2 - symbol.x2) < 30:
-            updateSymbol([symbol, s1], symbol_list, i, '=')
-            remove_symbols_indexes.append(i + 1)
-            return
+
+        if s1.label == '-':
+            symbol_width = symbol.x2 - symbol.x1
+            symbol_center = symbol.x1 + symbol_width / 2
+            s1_width = s1.x2 - s1.x1
+            s1_center = s1.x1 + s1_width / 2
+            avg_width = (symbol_width + s1_width) / 2
+            avg_height = (abs(symbol.y1 - s1.y1) + abs(symbol.y2 - s1.y2)) / 2
+
+            if s1.x1 < symbol_center < s1.x2 and symbol.x1 < s1_center < symbol.x2:
+                if (symbol_width <= s1_width and (symbol_width / s1_width) >= 0.6) or (
+                        s1_width < symbol_width and (s1_width / symbol_width >= 0.6)):
+                    if avg_height < 1.5 * avg_width:
+                        updateSymbol([symbol, s1], symbol_list, i, '=')
+                        remove_symbols_indexes.append(i + 1)
+                        return
 
     if i < len(symbol_list) - 2:  # Handle division mark
         s1 = symbol_list[i + 1]
@@ -249,11 +261,13 @@ def isProperExp(symbol):
            or symbol.label in [')', '-']
 
 
-# The exponent borders should be to the left of 0.4 of the base rectangle width and above 0.4 of its length
+# The exponent x center should be to the left of 0.6 of the base rectangle width and the exponent lowest point should
+# be above 0.4 of the base rectangle height, also the exponent highest point should be above the base highest point
 def isUpperPow(exponent, base):
     base_height_limit = base.y1 + (base.y2 - base.y1) * 0.4
-    base_width_limit = base.x1 + (base.x2 - base.x1) * 0.4
-    return exponent.y2 < base_height_limit and exponent.x2 < base_width_limit and exponent.y1 < base.y1
+    base_width_limit = base.x1 + (base.x2 - base.x1) * 0.6
+    exp_x_center = exponent.x1 + (exponent.x2 - exponent.x1) * 0.5
+    return exponent.y2 < base_height_limit and exp_x_center < base_width_limit and exponent.y1 < base.y1
 
 
 # The symbol is considered above the fraction line if the symbol center is between the fraction line's ends and the
@@ -274,8 +288,7 @@ def isUnderFrac(down, frac):
 
 def isInner(symbol, sqrt):
     x_center = symbol.x1 + (symbol.x2 - symbol.x1) / 2
-    y_center = symbol.y1 + (symbol.y2 - symbol.y1) / 2
-    return sqrt.x1 < x_center < sqrt.x2 and sqrt.y1 < y_center < sqrt.y2
+    return sqrt.x1 < x_center < sqrt.x2 and sqrt.y1 < symbol.y1 < sqrt.y2
 
 
 def isMultiplication(i, symbol_list):
