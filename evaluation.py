@@ -36,7 +36,6 @@ def polynomial(expression, mapping):
         error = "Sympifying equation failed"
         return solution, error
     if len(mapping) == 0:
-        error = 'No variables in the equation, pass to calculate()'
         return calculate(expression, mapping, error)
 
     variables = []

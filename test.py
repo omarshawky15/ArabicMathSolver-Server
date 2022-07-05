@@ -1,6 +1,6 @@
 import unittest
 
-from app import predict
+from app import predict, solve
 from evaluation import polynomial
 from translation import translate_to_arabic_html
 
@@ -188,6 +188,47 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(prediction['solution'], '[(-a - y + z, y, z, a)]')
         self.assertEqual(prediction['arabic_expr'], '<html><body>أ+ب -جـ+د</body></html>')
         self.assertEqual(prediction['arabic_sol'], ['<html><body>( -د -ب+جـ,ب,جـ,د)</body></html>'])
+
+    def test_simplification(self):
+        prediction = get_Prediction('test_images/IMG_11.png')
+        self.assertEqual(prediction['expression'], '(1+1)*(2+3)')
+        self.assertEqual(prediction['solution'], '10.0000000000000')
+
+        prediction = get_Prediction('test_images/IMG_5375.png')
+        self.assertEqual(prediction['expression'], '10^(12)')
+        self.assertEqual(prediction['solution'], '1000000000000.00')
+
+        prediction = get_Prediction('test_images/IMG_20220325_183755_522.jpg')
+        self.assertEqual(prediction['expression'], '(5.3+7)/5+1')
+        self.assertEqual(prediction['solution'], '3.46000000000000')
+
+        prediction = get_Prediction('test_images/IMG_12.png')
+        self.assertEqual(prediction['expression'], 'sin(E)^2+cos(E)^2')
+        self.assertEqual(prediction['solution'], '1.00000000000000')
+
+    def test_differentiation(self):
+        eng_pred, arab_pred = solve('test_images/IMG_1.png', problem='d')
+        self.assertEqual(eng_pred['expression'], 'x^3-x^2-7')
+        self.assertEqual(eng_pred['solution'], '3*x**2 - 2*x')
+        self.assertEqual(arab_pred['expression'], '<html><body>س <sup>٣</sup> -س <sup>٢</sup> -٧</body></html>')
+        self.assertEqual(arab_pred['solution'], ['<html><body>٣*س <sup>٢</sup> -٢*س</body></html>'])
+
+        eng_pred, arab_pred = solve('test_images/IMG_4.png', problem='d')
+        self.assertEqual(eng_pred['expression'], '2^3-5')
+        self.assertEqual(eng_pred['solution'], '0')
+
+    def test_integration(self):
+        eng_pred, arab_pred = solve('test_images/IMG_20220404_003309_121.jpg', problem='i')
+        self.assertEqual(eng_pred['expression'], 'x^2+3*x+2')
+        self.assertEqual(eng_pred['solution'], 'x**3/3 + 3*x**2/2 + 2*x')
+        self.assertEqual(arab_pred['expression'], '<html><body>س <sup>٢</sup>+٣*س+٢</body></html>')
+        self.assertEqual(arab_pred['solution'], ['<html><body>س <sup>٣</sup>\\٣+٣*س <sup>٢</sup>\\٢+٢*س</body></html>'])
+
+        eng_pred, arab_pred = solve('test_images/integ_trig.jpg', problem='i')
+        self.assertEqual(eng_pred['expression'], 'sin(2*x)')
+        self.assertEqual(eng_pred['solution'], '-cos(2*x)/2')
+        self.assertEqual(arab_pred['expression'], '<html><body>جا(٢*س)</body></html>')
+        self.assertEqual(arab_pred['solution'], ['<html><body> -جتا(٢*س)\\٢</body></html>'])
 
 
 if __name__ == '__main__':
