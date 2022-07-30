@@ -1,4 +1,11 @@
 # Arabic Math Solver - Server Side
+[![OpenCV](https://img.shields.io/badge/opencv-%23white.svg?style=for-the-badge&logo=opencv&logoColor=white)](
+https://opencv.org/)
+[![Flask](https://img.shields.io/badge/flask-%23000.svg?style=for-the-badge&logo=flask&logoColor=white)](
+https://flask.palletsprojects.com/en/2.1.x/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-%23FF6F00.svg?style=for-the-badge&logo=TensorFlow&logoColor=white)](
+https://www.tensorflow.org/)
+
 is a flask web app which recognizes sent image of an Arabic mathematical expression
 through characters' segmentation, characters recognition, and parsing them into a mathematical
 expression then apply an operation on it e.g (solving the roots of polynomial, integration, etc).
@@ -101,4 +108,4 @@ notation.
 ## License
 This application is released under GNU GPLv3 (see [LICENSE](LICENSE)).
 
-For more details, see [the graduation project book.](Graduation Project Book.pdf)
+For more details, see [the graduation project book.](Graduation_Project_Book.pdf)
